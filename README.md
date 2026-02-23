@@ -1,9 +1,9 @@
 # family-tree-merger
 
-A Go CLI tool that merges two family tree JSON files. The user and their
-brother-in-law each maintain a tree in the same format. The tool integrates
-the brother-in-law's changes into the user's tree: adding new persons, filling
-empty fields, and reporting conflicting values — either to a text file or via
+A Go CLI tool that merges two family tree JSON files if multiple persons maintain a tree
+in the same format and with shared IDs.
+The tool integrates the other person's changes into the user's tree: adding new persons,
+filling empty fields, and reporting conflicting values — either to a text file or via
 an interactive TUI.
 
 ## Usage
