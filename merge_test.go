@@ -144,6 +144,25 @@ func TestMergeRules(t *testing.T) {
 		}
 	})
 
+	// avatar_url: mine empty, theirs has value → conflict (not a silent fill).
+	t.Run("avatar_url_empty_mine_is_conflict", func(t *testing.T) {
+		if merged[0].Data.AvatarURL != "" {
+			t.Errorf("expected avatar_url kept empty (mine), got %q", merged[0].Data.AvatarURL)
+		}
+		var found bool
+		for _, c := range conflicts {
+			if c.Field == "data.avatar_url" {
+				found = true
+				if c.Mine != "" || c.Theirs != "avatars/anna.jpg" {
+					t.Errorf("conflict values wrong: mine=%q theirs=%q", c.Mine, c.Theirs)
+				}
+			}
+		}
+		if !found {
+			t.Error("expected conflict for data.avatar_url, got none")
+		}
+	})
+
 	// Rule 7: spouses array is the union of mine and theirs (no duplicates).
 	t.Run("rels_spouses_union", func(t *testing.T) {
 		spouses := merged[0].Rels.Spouses
@@ -190,6 +209,21 @@ func TestMergeEmptyInputs(t *testing.T) {
 			t.Errorf("expected no conflicts, got %v", conflicts)
 		}
 	})
+}
+
+// TestAvatarURLAlwaysConflict verifies that avatar_url is never silently filled,
+// even when mine is empty, because the file may not be available locally.
+func TestAvatarURLAlwaysConflict(t *testing.T) {
+	mine := []Person{{ID: "p1", Data: PersonData{FirstName: "X"}}}
+	theirs := []Person{{ID: "p1", Data: PersonData{FirstName: "X", AvatarURL: "avatars/x.jpg"}}}
+	merged, conflicts := merge(mine, theirs)
+
+	if merged[0].Data.AvatarURL != "" {
+		t.Errorf("expected avatar_url not filled (mine stays empty), got %q", merged[0].Data.AvatarURL)
+	}
+	if len(conflicts) != 1 || conflicts[0].Field != "data.avatar_url" {
+		t.Errorf("expected exactly one avatar_url conflict, got %v", conflicts)
+	}
 }
 
 // TestArrayUnionNoDuplicates ensures existing IDs in mine are not duplicated.

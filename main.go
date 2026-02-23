@@ -10,8 +10,14 @@ import (
 )
 
 func main() {
-	outputFlag := flag.String("output", "merged.json", "Output merged file path")
-	conflictsFlag := flag.String("conflicts", "conflicts.txt", "Output conflicts report path")
+	var outputPath, conflictsPath string
+	var interactive bool
+	flag.StringVar(&outputPath, "output", "merged.json", "Output merged file path")
+	flag.StringVar(&outputPath, "o", "merged.json", "")
+	flag.StringVar(&conflictsPath, "conflicts", "conflicts.txt", "Output conflicts report path")
+	flag.StringVar(&conflictsPath, "c", "conflicts.txt", "")
+	flag.BoolVar(&interactive, "interactive", false, "Resolve conflicts interactively")
+	flag.BoolVar(&interactive, "i", false, "")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: family-tree-merger [flags] <mine.json> <theirs.json>\n\nFlags:\n")
 		flag.PrintDefaults()
@@ -43,18 +49,26 @@ func main() {
 	merged, conflicts := merge(mine, theirs)
 	newCount := len(merged) - len(mine)
 
-	if err := writeJSON(*outputFlag, merged); err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing %s: %v\n", *outputFlag, err)
+	if interactive && len(conflicts) > 0 {
+		merged, conflicts, err = runInteractive(conflicts, merged)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error in interactive mode: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	if err := writeJSON(outputPath, merged); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing %s: %v\n", outputPath, err)
 		os.Exit(1)
 	}
-	if err := writeConflicts(*conflictsFlag, conflicts, merged, minePath, theirsPath); err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing %s: %v\n", *conflictsFlag, err)
+	if err := writeConflicts(conflictsPath, conflicts, merged, minePath, theirsPath); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing %s: %v\n", conflictsPath, err)
 		os.Exit(1)
 	}
 
 	fmt.Printf("Merged %d persons (%d new, %d updated) -> %s\n",
-		len(merged), newCount, len(merged)-newCount, *outputFlag)
-	fmt.Printf("Conflicts: %d -> %s\n", len(conflicts), *conflictsFlag)
+		len(merged), newCount, len(merged)-newCount, outputPath)
+	fmt.Printf("Conflicts: %d -> %s\n", len(conflicts), conflictsPath)
 }
 
 func loadJSON(path string) ([]Person, error) {

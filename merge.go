@@ -37,8 +37,16 @@ func merge(mine, theirs []Person) ([]Person, []Conflict) {
 	return merged, conflicts
 }
 
+// alwaysConflict lists fields that are always treated as conflicts when theirs
+// differs from mine, even if mine is empty. This prevents silent adoption of
+// values that require external resources (e.g. image files) to be useful.
+var alwaysConflict = map[string]bool{
+	"avatar_url": true,
+}
+
 // mergePersonData merges t's data fields into m using reflection.
 // Empty-fills non-conflicting fields; records conflicts for differing non-empty values.
+// Fields in alwaysConflict are never silently filled, even when mine is empty.
 func mergePersonData(m *Person, t Person) []Conflict {
 	var conflicts []Conflict
 
@@ -53,15 +61,15 @@ func mergePersonData(m *Person, t Person) []Conflict {
 		if mv == tv || tv == "" {
 			continue
 		}
-		if mv == "" {
+		fieldTag := jsonFieldName(typ.Field(i))
+		if mv == "" && !alwaysConflict[fieldTag] {
 			mVal.Field(i).SetString(tv)
 			continue
 		}
-		// both non-empty and different → conflict
-		fieldName := "data." + jsonFieldName(typ.Field(i))
+		// both non-empty and different, or always-conflict field → conflict
 		conflicts = append(conflicts, Conflict{
 			PersonID: m.ID,
-			Field:    fieldName,
+			Field:    "data." + fieldTag,
 			Mine:     mv,
 			Theirs:   tv,
 		})
