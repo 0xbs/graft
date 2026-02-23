@@ -1,6 +1,6 @@
 [
   {
-    "id": "6f8d3645-f8e6-4127-9f13-caf32d39f0cd",
+    "id": "6a893143-9b20-483d-807c-819520dabb36",
     "data": {
       "gender": "M",
       "nick_name": "Max",
@@ -21,15 +21,15 @@
       "note": "Softwareentwickler"
     },
     "rels": {
-      "father": "6eb30373-7678-481f-8d43-9532de59b55f",
-      "mother": "d8eb091f-25cc-4256-92c1-7796376b507a",
+      "father": "bf97ed0a-2d5f-43df-ab23-6b94809476fa",
+      "mother": "b4f9b84f-ecb4-4c66-aaf6-00439e4c613e",
       "children": [
-        "eb3a423f-d1f2-4721-8152-55cb7b678fc1",
-        "c831c2ac-af71-441e-99e6-f8a1664407d3",
-        "6f8d3645-f8e6-4127-9f13-caf32d39f0cd"
+        "a082674d-d96e-4daa-b428-b970e007857a",
+        "cfbddfad-7166-48ad-83d7-36ea63c3c4ce",
+        "e4bd57fe-d7ef-4ea3-b46f-a21ff13bcab9"
       ],
       "spouses": [
-        "d8eb091f-25cc-4256-92c1-7796376b507a"
+        "67197b4b-1e86-4465-8b41-dbb1e20d40e0"
       ]
     }
   }
