@@ -43,3 +43,8 @@ family-tree-merger [flags] <mine.json> <theirs.json>
 go build -o family-tree-merger .
 go test ./...
 ```
+
+## License
+
+This software is distributed under a GPL-3.0-or-later license.
+Also see https://www.gnu.org/licenses/gpl-3.0.html

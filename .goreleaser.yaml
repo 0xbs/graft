@@ -1,0 +1,24 @@
+version: 2
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+universal_binaries:
+  - replace: false
+homebrew_casks:
+  - repository:
+      owner: 0xbs
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/0xbs/family-tree-merger
+    description: A command line tool for merging family tree JSON files.
+    license: "GPL-3.0-or-later"
