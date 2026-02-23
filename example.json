@@ -1,0 +1,36 @@
+[
+  {
+    "id": "6f8d3645-f8e6-4127-9f13-caf32d39f0cd",
+    "data": {
+      "gender": "M",
+      "nick_name": "Max",
+      "first_name": "Maximilian",
+      "second_names": "Franz",
+      "family_name": "Mustermann",
+      "birth_name": "",
+      "birth_date": "1980-12-27",
+      "birth_place": "Musterstadt",
+      "residence_place": "",
+      "death_date": "",
+      "death_place": "",
+      "burial_place": "",
+      "marriage_date": "2010-10-10",
+      "marriage_place": "Musterstadt",
+      "divorce_date": "",
+      "avatar_url": "avatars/max.jpg",
+      "note": "Softwareentwickler"
+    },
+    "rels": {
+      "father": "6eb30373-7678-481f-8d43-9532de59b55f",
+      "mother": "d8eb091f-25cc-4256-92c1-7796376b507a",
+      "children": [
+        "eb3a423f-d1f2-4721-8152-55cb7b678fc1",
+        "c831c2ac-af71-441e-99e6-f8a1664407d3",
+        "6f8d3645-f8e6-4127-9f13-caf32d39f0cd"
+      ],
+      "spouses": [
+        "d8eb091f-25cc-4256-92c1-7796376b507a"
+      ]
+    }
+  }
+]

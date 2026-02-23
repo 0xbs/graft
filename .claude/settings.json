@@ -1,0 +1,7 @@
+{
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "commit-commands@claude-code-plugins": true
+  }
+}
