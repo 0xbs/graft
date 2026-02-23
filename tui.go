@@ -51,6 +51,7 @@ var (
 			BorderForeground(lipgloss.Color("#444444")).
 			Foreground(lipgloss.Color("#777777")).
 			Padding(0, 1)
+
 )
 
 // ── Model ─────────────────────────────────────────────────────────────────────
@@ -60,6 +61,7 @@ type tuiPhase int
 const (
 	phaseOverview  tuiPhase = iota
 	phaseResolving tuiPhase = iota
+	phaseConfirm   tuiPhase = iota
 	phaseDone      tuiPhase = iota
 )
 
@@ -73,6 +75,10 @@ type tuiModel struct {
 	choice  int   // 0 = mine, 1 = theirs
 	choices []int // one entry per conflict
 	scroll  int   // scroll offset for overview
+
+	prevPhase     tuiPhase // phase to return to if confirm is cancelled
+	confirmChoice int      // 0 = resolve remaining with mine, 1 = quit without output
+	aborted       bool     // true when user chose to quit without writing output
 
 	width  int
 	height int
@@ -112,7 +118,9 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter", " ":
 				m.phase = phaseResolving
 			case "q", "ctrl+c":
-				return m, tea.Quit
+				m.prevPhase = phaseOverview
+				m.confirmChoice = 0
+				m.phase = phaseConfirm
 			}
 
 		case phaseResolving:
@@ -129,7 +137,29 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.phase = phaseDone
 				}
 			case "q", "ctrl+c":
+				m.prevPhase = phaseResolving
+				m.confirmChoice = 0
+				m.phase = phaseConfirm
+			}
+
+		case phaseConfirm:
+			switch msg.String() {
+			case "up", "k":
+				m.confirmChoice = 0
+			case "down", "j":
+				m.confirmChoice = 1
+			case "ctrl+c":
+				m.aborted = true
 				return m, tea.Quit
+			case "q", "esc":
+				m.phase = m.prevPhase
+			case "enter", " ":
+				if m.confirmChoice == 1 {
+					m.aborted = true
+					return m, tea.Quit
+				}
+				// Resolve all remaining conflicts keeping mine (choice 0 is already the default).
+				m.phase = phaseDone
 			}
 
 		case phaseDone:
@@ -145,6 +175,8 @@ func (m tuiModel) View() string {
 		return m.viewOverview()
 	case phaseResolving:
 		return m.viewResolve()
+	case phaseConfirm:
+		return m.viewConfirm()
 	case phaseDone:
 		return m.viewDone()
 	}
@@ -287,6 +319,29 @@ func (m tuiModel) viewResolve() string {
 	return b.String()
 }
 
+// ── Confirm ───────────────────────────────────────────────────────────────────
+
+func (m tuiModel) viewConfirm() string {
+	remaining := len(m.conflicts) - m.current
+
+	cursor := [2]string{"  ", "  "}
+	style := [2]lipgloss.Style{sConflictPend, sConflictPend}
+	cursor[m.confirmChoice] = sConflictCur.Render("▶")
+	style[m.confirmChoice] = sConflictCur
+
+	var b strings.Builder
+	b.WriteString("\n")
+	b.WriteString(sTitle.Render(" Family Tree Merger — Quit? "))
+	b.WriteString("\n\n")
+	b.WriteString(fmt.Sprintf("  %d conflict(s) not yet resolved.\n\n", remaining))
+	b.WriteString(fmt.Sprintf("  %s  %s\n", cursor[0], style[0].Render("Resolve remaining (keep mine)")))
+	b.WriteString(fmt.Sprintf("  %s  %s\n", cursor[1], style[1].Render("Quit without writing output")))
+	b.WriteString("\n")
+	b.WriteString(sHelp.Render("  ↑ ↓ to select   Enter to confirm   Ctrl+C to force quit   q / Esc to go back"))
+	b.WriteString("\n")
+	return b.String()
+}
+
 // ── Done ──────────────────────────────────────────────────────────────────────
 
 func (m tuiModel) viewDone() string {
@@ -316,15 +371,20 @@ func (m tuiModel) viewDone() string {
 // ── Run ───────────────────────────────────────────────────────────────────────
 
 // runInteractive launches the Bubble Tea TUI for interactive conflict resolution.
-// Returns the updated merged persons and any conflicts the user kept as "mine".
-func runInteractive(conflicts []Conflict, merged []Person) ([]Person, []Conflict, error) {
+// Returns the updated merged persons, any conflicts the user kept as "mine", and
+// whether the user chose to abort without writing output.
+func runInteractive(conflicts []Conflict, merged []Person) ([]Person, []Conflict, bool, error) {
 	m := newTUIModel(conflicts, merged)
 	prog := tea.NewProgram(m, tea.WithAltScreen())
 	result, err := prog.Run()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	fm := result.(tuiModel)
+
+	if fm.aborted {
+		return nil, nil, true, nil
+	}
 
 	updatedMerged := applyChoices(fm.merged, fm.conflicts, fm.choices)
 
@@ -334,7 +394,7 @@ func runInteractive(conflicts []Conflict, merged []Person) ([]Person, []Conflict
 			remaining = append(remaining, c)
 		}
 	}
-	return updatedMerged, remaining, nil
+	return updatedMerged, remaining, false, nil
 }
 
 // ── Apply choices ─────────────────────────────────────────────────────────────

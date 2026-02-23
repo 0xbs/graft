@@ -50,10 +50,15 @@ func main() {
 	newCount := len(merged) - len(mine)
 
 	if interactive && len(conflicts) > 0 {
-		merged, conflicts, err = runInteractive(conflicts, merged)
+		var aborted bool
+		merged, conflicts, aborted, err = runInteractive(conflicts, merged)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error in interactive mode: %v\n", err)
 			os.Exit(1)
+		}
+		if aborted {
+			fmt.Fprintln(os.Stderr, "Aborted — no output files written.")
+			os.Exit(0)
 		}
 	}
 
