@@ -37,12 +37,25 @@ family-tree-merger [flags] <mine.json> <theirs.json>
 | `avatar_url`: mine empty, theirs non-empty | Always conflict — never silently filled |
 | `children`/`spouses` arrays | Union — add missing IDs, no conflicts |
 
-## Build & test
+## Install
 
-```bash
-go build -o family-tree-merger .
-go test ./...
+### Using Homebrew
+```shell
+brew tap 0xbs/tap
+brew install family-tree-merger
 ```
+
+### From Source
+```shell
+go install github.com/0xbs/family-tree-merger@latest
+```
+
+### Download Binary
+Check out the [release page](https://github.com/0xbs/family-tree-merger/releases) and download the latest release.
+
+## Build
+
+To build, use standard Golang commands like `go build`.
 
 ## License
 
