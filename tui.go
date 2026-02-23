@@ -237,7 +237,7 @@ func (m tuiModel) viewResolve() string {
 	b.WriteString("  " + sPersonName.Render(fullName(p)) + "\n\n")
 
 	// Conflict list for this person
-	b.WriteString(sSubtle.Render("  Conflicts for this person:\n"))
+	b.WriteString(sSubtle.Render("  Conflicts for this person:") + "\n")
 	for _, idx := range personIdx {
 		cc := m.conflicts[idx]
 		const ind = "    "
