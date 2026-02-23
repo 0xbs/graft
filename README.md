@@ -34,7 +34,7 @@ family-tree-merger [flags] <mine.json> <theirs.json>
 | Field: mine non-empty, theirs empty | Keep mine (no conflict) |
 | Field: both equal | No conflict |
 | Field: both non-empty and different | Conflict — keep mine, log |
-| `avatar_url`: mine empty, theirs non-empty | **Always conflict** — never silently filled |
+| `avatar_url`: mine empty, theirs non-empty | Always conflict — never silently filled |
 | `children`/`spouses` arrays | Union — add missing IDs, no conflicts |
 
 ## Build & test
