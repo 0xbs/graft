@@ -1,0 +1,59 @@
+[
+  {
+    "id": "aaaaaaaa-0000-0000-0000-000000000001",
+    "data": {
+      "gender": "F",
+      "nick_name": "Anna",
+      "first_name": "Anna",
+      "second_names": "",
+      "family_name": "Schmidt",
+      "birth_name": "",
+      "birth_date": "1985-06-15",
+      "birth_place": "Hamburg",
+      "residence_place": "",
+      "death_date": "",
+      "death_place": "",
+      "burial_place": "",
+      "marriage_date": "",
+      "marriage_place": "",
+      "divorce_date": "",
+      "avatar_url": "",
+      "note": "Teacher"
+    },
+    "rels": {
+      "father": "aaaaaaaa-0000-0000-0000-000000000011",
+      "mother": "aaaaaaaa-0000-0000-0000-000000000012",
+      "children": [
+        "aaaaaaaa-0000-0000-0000-000000000030",
+        "aaaaaaaa-0000-0000-0000-000000000031"
+      ],
+      "spouses": [
+        "aaaaaaaa-0000-0000-0000-000000000020",
+        "aaaaaaaa-0000-0000-0000-000000000021"
+      ]
+    }
+  },
+  {
+    "id": "aaaaaaaa-0000-0000-0000-000000000002",
+    "data": {
+      "gender": "M",
+      "nick_name": "",
+      "first_name": "Ben",
+      "second_names": "",
+      "family_name": "Schmidt",
+      "birth_name": "",
+      "birth_date": "1988-03-22",
+      "birth_place": "Munich",
+      "residence_place": "",
+      "death_date": "",
+      "death_place": "",
+      "burial_place": "",
+      "marriage_date": "",
+      "marriage_place": "",
+      "divorce_date": "",
+      "avatar_url": "",
+      "note": ""
+    },
+    "rels": {}
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "aaaaaaaa-0000-0000-0000-000000000001",
+    "data": {
+      "gender": "F",
+      "nick_name": "Anna",
+      "first_name": "Anna",
+      "second_names": "",
+      "family_name": "Schmidt",
+      "birth_name": "",
+      "birth_date": "",
+      "birth_place": "Berlin",
+      "residence_place": "",
+      "death_date": "",
+      "death_place": "",
+      "burial_place": "",
+      "marriage_date": "",
+      "marriage_place": "",
+      "divorce_date": "",
+      "avatar_url": "",
+      "note": "Teacher"
+    },
+    "rels": {
+      "father": "aaaaaaaa-0000-0000-0000-000000000010",
+      "mother": "",
+      "children": [
+        "aaaaaaaa-0000-0000-0000-000000000030"
+      ],
+      "spouses": [
+        "aaaaaaaa-0000-0000-0000-000000000020"
+      ]
+    }
+  }
+]
