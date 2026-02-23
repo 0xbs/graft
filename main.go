@@ -130,7 +130,7 @@ func writeConflicts(path string, conflicts []Conflict, persons []Person, minePat
 			sb.WriteString("\n")
 			fmt.Fprintf(&sb, "Person: %s (%s)\n", id, fullName(p))
 			for _, c := range grouped[id] {
-				fmt.Fprintf(&sb, "  Field:  %s\n", c.Field)
+				fmt.Fprintf(&sb, "- Field:  %s\n", c.Field)
 				fmt.Fprintf(&sb, "  Mine:   %q\n", c.Mine)
 				fmt.Fprintf(&sb, "  Theirs: %q\n", c.Theirs)
 				fmt.Fprintf(&sb, "  Action: kept mine\n")

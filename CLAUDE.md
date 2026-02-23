@@ -56,11 +56,11 @@ Total conflicts: 2
 ================================================================================
 
 Person: 6f8d3645-... ("Max" Maximilian Franz Mustermann)
-  Field:  data.birth_place
+- Field:  data.birth_place
   Mine:   "Musterstadt"
   Theirs: "Berlin"
   Action: kept mine
-  Field:  rels.father
+- Field:  rels.father
   Mine:   "6eb30373-..."
   Theirs: "aaaabbbb-..."
   Action: kept mine
