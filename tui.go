@@ -247,11 +247,11 @@ func (m tuiModel) viewResolve() string {
 			if m.choices[idx] == 1 {
 				choice = "theirs"
 			}
-			b.WriteString(ind + sConflictDone.Render(fmt.Sprintf("✓  %-28s (%s)", cc.Field, choice)) + "\n")
+			b.WriteString(ind + sConflictDone.Render("✓") + "  " + fmt.Sprintf("%-30s", cc.Field) + "  " + sSubtle.Render("("+choice+")") + "\n")
 		case idx == m.current:
-			b.WriteString(ind + sConflictCur.Render("→  "+cc.Field) + "\n")
+			b.WriteString(ind + sConflictCur.Render("→") + "  " + cc.Field + "\n")
 		default:
-			b.WriteString(ind + sConflictPend.Render("·  "+cc.Field) + "\n")
+			b.WriteString(ind + sConflictPend.Render("·") + "  " + cc.Field + "\n")
 		}
 	}
 	b.WriteString("\n")
