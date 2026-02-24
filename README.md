@@ -1,4 +1,4 @@
-# family-tree-merger
+# graft
 
 A Go CLI tool that merges two family tree JSON files if multiple persons maintain a tree
 in the same format and with shared IDs.
@@ -6,10 +6,14 @@ The tool integrates the other person's changes into the user's tree: adding new 
 filling empty fields, and reporting conflicting values — either to a text file or via
 an interactive TUI.
 
+> **Why "graft"?** In botany, grafting joins two plants into a single one by uniting
+> their tissues. That's exactly what this tool does: it grafts two family trees together
+> into one.
+
 ## Usage
 
 ```
-family-tree-merger [flags] <mine.json> <theirs.json>
+graft [flags] <mine.json> <theirs.json>
 
   -output,    -o  string   Output merged file (default "merged.json")
   -conflicts, -c  string   Conflicts report file (default "conflicts.txt")
@@ -18,11 +22,11 @@ family-tree-merger [flags] <mine.json> <theirs.json>
 
 ```bash
 # Non-interactive
-./family-tree-merger mine.json theirs.json
-./family-tree-merger -o result.json -c report.txt mine.json theirs.json
+graft mine.json theirs.json
+graft -o result.json -c report.txt mine.json theirs.json
 
 # Interactive
-./family-tree-merger -i mine.json theirs.json
+graft -i mine.json theirs.json
 ```
 
 ## Merge behaviour
@@ -42,16 +46,16 @@ family-tree-merger [flags] <mine.json> <theirs.json>
 ### Using Homebrew
 ```shell
 brew tap 0xbs/tap
-brew install family-tree-merger
+brew install graft
 ```
 
 ### From Source
 ```shell
-go install github.com/0xbs/family-tree-merger@latest
+go install github.com/0xbs/graft@latest
 ```
 
 ### Download Binary
-Check out the [release page](https://github.com/0xbs/family-tree-merger/releases) and download the latest release.
+Check out the [release page](https://github.com/0xbs/graft/releases) and download the latest release.
 
 ## Build
 

@@ -19,7 +19,7 @@ func main() {
 	flag.BoolVar(&interactive, "interactive", false, "Resolve conflicts interactively")
 	flag.BoolVar(&interactive, "i", false, "")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: family-tree-merger [flags] <mine.json> <theirs.json>\n\nFlags:\n")
+		fmt.Fprintf(os.Stderr, "Usage: graft [flags] <mine.json> <theirs.json>\n\nFlags:\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()

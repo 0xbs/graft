@@ -1,6 +1,6 @@
 .DS_Store
 *.iml
-family-tree-merger
-family-tree-merger.exe
+graft
+graft.exe
 
 .idea/

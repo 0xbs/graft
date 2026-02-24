@@ -19,6 +19,6 @@ homebrew_casks:
       owner: 0xbs
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    homepage: https://github.com/0xbs/family-tree-merger
+    homepage: https://github.com/0xbs/graft
     description: A command line tool for merging family tree JSON files.
     license: "GPL-3.0-or-later"

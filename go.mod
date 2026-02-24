@@ -1,4 +1,4 @@
-module family-tree-merger
+module graft
 
 go 1.26
 
