@@ -1,7 +1,8 @@
 # graft
 
-A Go CLI tool that merges two family tree JSON files if multiple persons maintain a tree
-in the same format and with shared IDs.
+A Go CLI tool that merges two family tree JSON files as used by 
+[donatso/family-chart](https://github.com/donatso/family-chart).
+Useful if multiple persons maintain a tree in the same format and with shared IDs.
 The tool integrates the other person's changes into the user's tree: adding new persons,
 filling empty fields, and reporting conflicting values — either to a text file or via
 an interactive TUI.
