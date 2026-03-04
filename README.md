@@ -53,7 +53,6 @@ graft -validate merged.json
 | Invalid calendar dates | `*_date`/`birthday` fields matching `yyyy-mm-dd` must be real calendar dates (e.g. `2024-02-30` is rejected) |
 | Duplicate JSON keys | The same field name must not appear more than once in a `data` object |
 | Duplicate IDs | Each person ID must be unique |
-| Identical persons | Two persons with matching data fields but different IDs |
 
 **Warnings** (data quality hints):
 
@@ -61,6 +60,7 @@ graft -validate merged.json
 |-------|-------------|
 | Non-standard date format | `*_date`/`birthday` fields with values that are neither `yyyy` nor `yyyy-mm-dd` |
 | Rare fields | Fields used by exactly one person in a dataset of ≥5 (possible typo) |
+| Identical persons | Two persons sharing at least one relation and having exactly matching data fields but different IDs |
 
 ## Merge behaviour
 

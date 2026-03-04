@@ -166,21 +166,30 @@ func validate(persons []Person, rawJSON []byte) ValidationResult {
 		}
 	}
 
-	// Persons with identical data but different IDs.
-	dataMap := make(map[string][]string) // canonical → []IDs
-	for _, p := range persons {
-		key := canonicalData(p.Data)
+	// Persons with identical data AND at least one relation in common but different IDs.
+	dataMap := make(map[string][]*Person) // canonical → persons
+	for i := range persons {
+		key := canonicalData(persons[i].Data)
 		if key != "" {
-			dataMap[key] = append(dataMap[key], p.ID)
+			dataMap[key] = append(dataMap[key], &persons[i])
 		}
 	}
-	for _, ids := range dataMap {
-		if len(ids) > 1 {
-			sort.Strings(ids)
-			result.Errors = append(result.Errors, Issue{
-				PersonID: strings.Join(ids, ", "),
-				Message:  "persons have exactly matching data fields but different IDs",
-			})
+	for _, group := range dataMap {
+		if len(group) < 2 {
+			continue
+		}
+		for i := 0; i < len(group); i++ {
+			for j := i + 1; j < len(group); j++ {
+				a, b := group[i], group[j]
+				if shareRelation(a, b) {
+					ids := []string{a.ID, b.ID}
+					sort.Strings(ids)
+					result.Warnings = append(result.Warnings, Issue{
+						PersonID: strings.Join(ids, ", "),
+						Message:  "persons have exactly matching data fields but different IDs",
+					})
+				}
+			}
 		}
 	}
 
@@ -200,6 +209,28 @@ func validate(persons []Person, rawJSON []byte) ValidationResult {
 func containsStr(slice []string, s string) bool {
 	for _, v := range slice {
 		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+// shareRelation reports whether two persons share at least one relation:
+// the same father, the same mother, a common child, or a common spouse.
+func shareRelation(a, b *Person) bool {
+	if a.Rels.Father != "" && a.Rels.Father == b.Rels.Father {
+		return true
+	}
+	if a.Rels.Mother != "" && a.Rels.Mother == b.Rels.Mother {
+		return true
+	}
+	for _, id := range a.Rels.Children {
+		if containsStr(b.Rels.Children, id) {
+			return true
+		}
+	}
+	for _, id := range a.Rels.Spouses {
+		if containsStr(b.Rels.Spouses, id) {
 			return true
 		}
 	}

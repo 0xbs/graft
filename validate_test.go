@@ -26,6 +26,15 @@ func hasErrorFor(result ValidationResult, id, substr string) bool {
 	return false
 }
 
+func hasWarning(result ValidationResult, substr string) bool {
+	for _, w := range result.Warnings {
+		if strings.Contains(w.Message, substr) {
+			return true
+		}
+	}
+	return false
+}
+
 func hasWarningFor(result ValidationResult, id, substr string) bool {
 	for _, w := range result.Warnings {
 		if w.PersonID == id && strings.Contains(w.Message, substr) {
@@ -210,22 +219,60 @@ func TestValidate_DuplicateDataKeys(t *testing.T) {
 
 // ── Identical data, different IDs ─────────────────────────────────────────────
 
-func TestValidate_IdenticalPersonsDifferentIDs(t *testing.T) {
+func TestValidate_IdenticalPersonsDifferentIDs_SharedRelation(t *testing.T) {
+	// Same data AND a common child → should be flagged.
 	persons := []Person{
 		{
 			ID:   "a1",
 			Data: PersonData{"gender": "M", "first_name": "John"},
-			Rels: PersonRels{Spouses: []string{"a2"}},
+			Rels: PersonRels{Children: []string{"c1"}},
 		},
 		{
 			ID:   "a2",
 			Data: PersonData{"gender": "M", "first_name": "John"},
-			Rels: PersonRels{Spouses: []string{"a1"}},
+			Rels: PersonRels{Children: []string{"c1"}},
+		},
+		{
+			ID:   "c1",
+			Data: PersonData{"gender": "F"},
+			Rels: PersonRels{Father: "a1"},
 		},
 	}
 	result := validate(persons, nil)
-	if !hasError(result, "exactly matching data fields") {
-		t.Error("expected identical-persons error")
+	if !hasWarning(result, "exactly matching data fields") {
+		t.Error("expected identical-persons warning when data matches and relation is shared")
+	}
+}
+
+func TestValidate_IdenticalPersonsDifferentIDs_NoSharedRelation(t *testing.T) {
+	// Same data but no relations in common → must NOT be flagged.
+	persons := []Person{
+		{
+			ID:   "a1",
+			Data: PersonData{"gender": "M", "first_name": "John"},
+			Rels: PersonRels{Children: []string{"c1"}},
+		},
+		{
+			ID:   "a2",
+			Data: PersonData{"gender": "M", "first_name": "John"},
+			Rels: PersonRels{Children: []string{"c2"}},
+		},
+		{
+			ID:   "c1",
+			Data: PersonData{"gender": "F"},
+			Rels: PersonRels{Father: "a1"},
+		},
+		{
+			ID:   "c2",
+			Data: PersonData{"gender": "F"},
+			Rels: PersonRels{Father: "a2"},
+		},
+	}
+	result := validate(persons, nil)
+	for _, w := range result.Warnings {
+		if strings.Contains(w.Message, "exactly matching data fields") {
+			t.Error("unexpected identical-persons warning when no relation is shared")
+		}
 	}
 }
 
