@@ -109,26 +109,56 @@ func runValidate(path string) {
 
 	result := validate(persons, rawJSON)
 
+	// Build ID → Person index for name lookup.
+	index := make(map[string]Person, len(persons))
+	for _, p := range persons {
+		index[p.ID] = p
+	}
+
+	// personLabel returns "Name (id)" for a single ID, or a comma-separated
+	// list when PersonID holds multiple IDs (e.g. the identical-persons warning).
+	personLabel := func(personID string) string {
+		ids := strings.Split(personID, ", ")
+		parts := make([]string, 0, len(ids))
+		for _, id := range ids {
+			id = strings.TrimSpace(id)
+			if p, ok := index[id]; ok {
+				if name := fullName(p); name != "" {
+					parts = append(parts, fmt.Sprintf("%s (%s)", name, id))
+					continue
+				}
+			}
+			parts = append(parts, id)
+		}
+		return strings.Join(parts, ", ")
+	}
+
+	printIssues := func(issues []Issue) {
+		for _, issue := range issues {
+			fmt.Printf("  %s\n  → %s\n\n", personLabel(issue.PersonID), issue.Message)
+		}
+	}
+
+	fmt.Printf("Validating %s — %d persons\n", path, len(persons))
+	fmt.Println(strings.Repeat("─", 60))
+
 	if len(result.Errors) == 0 && len(result.Warnings) == 0 {
-		fmt.Printf("Validated %d persons — no issues found.\n", len(persons))
+		fmt.Println("No issues found.")
 		return
 	}
 
 	if len(result.Errors) > 0 {
-		fmt.Printf("Errors (%d):\n", len(result.Errors))
-		for _, e := range result.Errors {
-			fmt.Printf("  [%s] %s\n", e.PersonID, e.Message)
-		}
+		fmt.Printf("\nErrors (%d)\n\n", len(result.Errors))
+		printIssues(result.Errors)
 	}
 	if len(result.Warnings) > 0 {
-		fmt.Printf("Warnings (%d):\n", len(result.Warnings))
-		for _, w := range result.Warnings {
-			fmt.Printf("  [%s] %s\n", w.PersonID, w.Message)
-		}
+		fmt.Printf("\nWarnings (%d)\n\n", len(result.Warnings))
+		printIssues(result.Warnings)
 	}
 
-	fmt.Printf("\nValidated %d persons: %d error(s), %d warning(s)\n",
-		len(persons), len(result.Errors), len(result.Warnings))
+	fmt.Println(strings.Repeat("─", 60))
+	fmt.Printf("Result: %d error(s), %d warning(s)\n",
+		len(result.Errors), len(result.Warnings))
 
 	if len(result.Errors) > 0 {
 		os.Exit(1)
