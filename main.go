@@ -11,7 +11,7 @@ import (
 
 func main() {
 	var outputPath, conflictsPath, alwaysConflictFlag string
-	var interactive bool
+	var interactive, validateMode bool
 	flag.StringVar(&outputPath, "output", "merged.json", "Output merged file path")
 	flag.StringVar(&outputPath, "o", "merged.json", "")
 	flag.StringVar(&conflictsPath, "conflicts", "conflicts.txt", "Output conflicts report path")
@@ -20,11 +20,24 @@ func main() {
 	flag.BoolVar(&interactive, "i", false, "")
 	flag.StringVar(&alwaysConflictFlag, "always-conflict", "avatar_url,avatar", "Comma-separated data fields to always treat as conflicts, even when mine is empty")
 	flag.StringVar(&alwaysConflictFlag, "ac", "avatar_url,avatar", "")
+	flag.BoolVar(&validateMode, "validate", false, "Validate a file for errors and warnings instead of merging")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: graft [flags] <mine.json> <theirs.json>\n\nFlags:\n")
+		fmt.Fprintf(os.Stderr, "Usage:\n")
+		fmt.Fprintf(os.Stderr, "  graft [flags] <mine.json> <theirs.json>   merge two files\n")
+		fmt.Fprintf(os.Stderr, "  graft -validate <file.json>               validate a file\n\nFlags:\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
+
+	if validateMode {
+		args := flag.Args()
+		if len(args) != 1 {
+			fmt.Fprintf(os.Stderr, "Usage: graft -validate <file.json>\n")
+			os.Exit(1)
+		}
+		runValidate(args[0])
+		return
+	}
 
 	args := flag.Args()
 	if len(args) != 2 {
@@ -78,6 +91,47 @@ func main() {
 	fmt.Printf("Merged %d persons (%d new, %d updated) -> %s\n",
 		len(merged), newCount, len(merged)-newCount, outputPath)
 	fmt.Printf("Conflicts: %d -> %s\n", len(conflicts), conflictsPath)
+}
+
+// runValidate loads path, runs validation, prints all issues, and exits 1 if there are errors.
+func runValidate(path string) {
+	rawJSON, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading %s: %v\n", path, err)
+		os.Exit(1)
+	}
+	var persons []Person
+	if err := json.Unmarshal(rawJSON, &persons); err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing %s: %v\n", path, err)
+		os.Exit(1)
+	}
+
+	result := validate(persons, rawJSON)
+
+	if len(result.Errors) == 0 && len(result.Warnings) == 0 {
+		fmt.Printf("Validated %d persons — no issues found.\n", len(persons))
+		return
+	}
+
+	if len(result.Errors) > 0 {
+		fmt.Printf("Errors (%d):\n", len(result.Errors))
+		for _, e := range result.Errors {
+			fmt.Printf("  [%s] %s\n", e.PersonID, e.Message)
+		}
+	}
+	if len(result.Warnings) > 0 {
+		fmt.Printf("Warnings (%d):\n", len(result.Warnings))
+		for _, w := range result.Warnings {
+			fmt.Printf("  [%s] %s\n", w.PersonID, w.Message)
+		}
+	}
+
+	fmt.Printf("\nValidated %d persons: %d error(s), %d warning(s)\n",
+		len(persons), len(result.Errors), len(result.Warnings))
+
+	if len(result.Errors) > 0 {
+		os.Exit(1)
+	}
 }
 
 // parseAlwaysConflict parses a comma-separated list of field names into a set.

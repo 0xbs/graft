@@ -14,7 +14,8 @@ an interactive TUI.
 ## Usage
 
 ```
-graft [flags] <mine.json> <theirs.json>
+graft [flags] <mine.json> <theirs.json>   merge two files
+graft -validate <file.json>               validate a file
 
   -output,         -o   string   Output merged file (default "merged.json")
   -conflicts,      -c   string   Conflicts report file (default "conflicts.txt")
@@ -22,6 +23,7 @@ graft [flags] <mine.json> <theirs.json>
   -always-conflict,-ac  string   Comma-separated data fields to always treat as
                                  conflicts, even when mine is empty
                                  (default "avatar_url,avatar")
+  -validate                      Validate a file for errors and warnings
 ```
 
 ```bash
@@ -31,7 +33,34 @@ graft -o result.json -c report.txt mine.json theirs.json
 
 # Interactive
 graft -i mine.json theirs.json
+
+# Validate
+graft -validate merged.json
 ```
+
+## Validation
+
+`graft -validate <file.json>` checks a family tree JSON file for data quality issues and exits with code 1 if any errors are found.
+
+**Errors** (structural problems that should be fixed):
+
+| Check | Description |
+|-------|-------------|
+| Missing/invalid gender | Every person must have `gender` set to `M` or `F` |
+| Isolated person | Every person must have at least one relation |
+| Missing reciprocal relations | If A lists B as father/mother, B must list A as a child; spouses must reference each other |
+| Non-existent relation targets | Referenced IDs must exist in the file |
+| Invalid calendar dates | `*_date`/`birthday` fields matching `yyyy-mm-dd` must be real calendar dates (e.g. `2024-02-30` is rejected) |
+| Duplicate JSON keys | The same field name must not appear more than once in a `data` object |
+| Duplicate IDs | Each person ID must be unique |
+| Identical persons | Two persons with matching data fields but different IDs |
+
+**Warnings** (data quality hints):
+
+| Check | Description |
+|-------|-------------|
+| Non-standard date format | `*_date`/`birthday` fields with values that are neither `yyyy` nor `yyyy-mm-dd` |
+| Rare fields | Fields used by exactly one person in a dataset of ≥5 (possible typo) |
 
 ## Merge behaviour
 
