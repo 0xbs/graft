@@ -1,14 +1,10 @@
 package main
 
-import (
-	"reflect"
-	"strings"
-)
-
 // merge integrates theirs into mine and returns the merged slice and any conflicts.
 // Persons in theirs not present in mine are appended. For matched persons,
 // empty fields in mine are filled from theirs; differing non-empty fields are conflicts.
-func merge(mine, theirs []Person) ([]Person, []Conflict) {
+// alwaysConflict lists data field names that are never silently filled, even when mine is empty.
+func merge(mine, theirs []Person, alwaysConflict map[string]bool) ([]Person, []Conflict) {
 	mineIndex := make(map[string]*Person, len(mine))
 	for i := range mine {
 		p := &mine[i]
@@ -27,7 +23,7 @@ func merge(mine, theirs []Person) ([]Person, []Conflict) {
 			newPersons = append(newPersons, t)
 			continue
 		}
-		conflicts = append(conflicts, mergePersonData(m, t)...)
+		conflicts = append(conflicts, mergePersonData(m, t, alwaysConflict)...)
 		conflicts = append(conflicts, mergePersonRels(m, t)...)
 	}
 
@@ -37,39 +33,31 @@ func merge(mine, theirs []Person) ([]Person, []Conflict) {
 	return merged, conflicts
 }
 
-// alwaysConflict lists fields that are always treated as conflicts when theirs
-// differs from mine, even if mine is empty. This prevents silent adoption of
-// values that require external resources (e.g. image files) to be useful.
-var alwaysConflict = map[string]bool{
-	"avatar_url": true,
-}
-
-// mergePersonData merges t's data fields into m using reflection.
+// mergePersonData merges t's data fields into m.
 // Empty-fills non-conflicting fields; records conflicts for differing non-empty values.
 // Fields in alwaysConflict are never silently filled, even when mine is empty.
-func mergePersonData(m *Person, t Person) []Conflict {
+func mergePersonData(m *Person, t Person, alwaysConflict map[string]bool) []Conflict {
 	var conflicts []Conflict
 
-	mVal := reflect.ValueOf(&m.Data).Elem()
-	tVal := reflect.ValueOf(t.Data)
-	typ := reflect.TypeOf(t.Data)
-
-	for i := 0; i < typ.NumField(); i++ {
-		mv := mVal.Field(i).String()
-		tv := tVal.Field(i).String()
-
-		if mv == tv || tv == "" {
+	for key, tv := range t.Data {
+		if tv == "" {
 			continue
 		}
-		fieldTag := jsonFieldName(typ.Field(i))
-		if mv == "" && !alwaysConflict[fieldTag] {
-			mVal.Field(i).SetString(tv)
+		mv := m.Data[key]
+		if mv == tv {
+			continue
+		}
+		if mv == "" && !alwaysConflict[key] {
+			if m.Data == nil {
+				m.Data = make(PersonData)
+			}
+			m.Data[key] = tv
 			continue
 		}
 		// both non-empty and different, or always-conflict field → conflict
 		conflicts = append(conflicts, Conflict{
 			PersonID: m.ID,
-			Field:    "data." + fieldTag,
+			Field:    "data." + key,
 			Mine:     mv,
 			Theirs:   tv,
 		})
@@ -85,8 +73,8 @@ func mergePersonRels(m *Person, t Person) []Conflict {
 
 	// Single-ref fields
 	singleRefs := []struct {
-		name  string
-		mine  *string
+		name   string
+		mine   *string
 		theirs string
 	}{
 		{"rels.father", &m.Rels.Father, t.Rels.Father},
@@ -131,14 +119,4 @@ func unionStrings(base, additions []string) []string {
 		}
 	}
 	return base
-}
-
-// jsonFieldName extracts the JSON field name from a struct field's tag.
-func jsonFieldName(f reflect.StructField) string {
-	tag := f.Tag.Get("json")
-	if tag == "" {
-		return strings.ToLower(f.Name)
-	}
-	name, _, _ := strings.Cut(tag, ",")
-	return name
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	var outputPath, conflictsPath string
+	var outputPath, conflictsPath, alwaysConflictFlag string
 	var interactive bool
 	flag.StringVar(&outputPath, "output", "merged.json", "Output merged file path")
 	flag.StringVar(&outputPath, "o", "merged.json", "")
@@ -18,6 +18,8 @@ func main() {
 	flag.StringVar(&conflictsPath, "c", "conflicts.txt", "")
 	flag.BoolVar(&interactive, "interactive", false, "Resolve conflicts interactively")
 	flag.BoolVar(&interactive, "i", false, "")
+	flag.StringVar(&alwaysConflictFlag, "always-conflict", "avatar_url,avatar", "Comma-separated data fields to always treat as conflicts, even when mine is empty")
+	flag.StringVar(&alwaysConflictFlag, "ac", "avatar_url,avatar", "")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: graft [flags] <mine.json> <theirs.json>\n\nFlags:\n")
 		flag.PrintDefaults()
@@ -46,7 +48,9 @@ func main() {
 	warnDuplicates(mine, minePath)
 	warnDuplicates(theirs, theirsPath)
 
-	merged, conflicts := merge(mine, theirs)
+	alwaysConflict := parseAlwaysConflict(alwaysConflictFlag)
+
+	merged, conflicts := merge(mine, theirs, alwaysConflict)
 	newCount := len(merged) - len(mine)
 
 	if interactive && len(conflicts) > 0 {
@@ -74,6 +78,17 @@ func main() {
 	fmt.Printf("Merged %d persons (%d new, %d updated) -> %s\n",
 		len(merged), newCount, len(merged)-newCount, outputPath)
 	fmt.Printf("Conflicts: %d -> %s\n", len(conflicts), conflictsPath)
+}
+
+// parseAlwaysConflict parses a comma-separated list of field names into a set.
+func parseAlwaysConflict(s string) map[string]bool {
+	result := make(map[string]bool)
+	for _, f := range strings.Split(s, ",") {
+		if f = strings.TrimSpace(f); f != "" {
+			result[f] = true
+		}
+	}
+	return result
 }
 
 func loadJSON(path string) ([]Person, error) {
@@ -142,27 +157,25 @@ func writeConflicts(path string, conflicts []Conflict, persons []Person, minePat
 	return os.WriteFile(path, []byte(sb.String()), 0644)
 }
 
-// fullName assembles a display name from a person's name fields.
-// Format: "NickName" FirstName SecondNames FamilyName geb. BirthName
+// nameFields lists data keys whose non-empty values are joined to form a display name.
+// Alternatives for the same concept sit next to each other; real data will only have one.
+var nameFields = []string{
+	"nick_name", "nick name",
+	"first_name", "first name",
+	"family_name", "last_name", "last name",
+	"birth_name", "birth name",
+	"birth_date", "birthday",
+}
+
+// fullName assembles a display name by joining all nameFields values that are non-empty.
 func fullName(p Person) string {
 	var parts []string
-	if p.Data.NickName != "" {
-		parts = append(parts, `"`+p.Data.NickName+`"`)
+	for _, key := range nameFields {
+		if v := p.Data[key]; v != "" {
+			parts = append(parts, v)
+		}
 	}
-	if p.Data.FirstName != "" {
-		parts = append(parts, p.Data.FirstName)
-	}
-	if p.Data.SecondNames != "" {
-		parts = append(parts, p.Data.SecondNames)
-	}
-	if p.Data.FamilyName != "" {
-		parts = append(parts, p.Data.FamilyName)
-	}
-	name := strings.Join(parts, " ")
-	if p.Data.BirthName != "" {
-		name += " geb. " + p.Data.BirthName
-	}
-	return name
+	return strings.Join(parts, " ")
 }
 
 func warnDuplicates(persons []Person, path string) {

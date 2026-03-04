@@ -16,9 +16,12 @@ an interactive TUI.
 ```
 graft [flags] <mine.json> <theirs.json>
 
-  -output,    -o  string   Output merged file (default "merged.json")
-  -conflicts, -c  string   Conflicts report file (default "conflicts.txt")
-  -interactive,-i          Resolve conflicts interactively via TUI
+  -output,         -o   string   Output merged file (default "merged.json")
+  -conflicts,      -c   string   Conflicts report file (default "conflicts.txt")
+  -interactive,    -i            Resolve conflicts interactively via TUI
+  -always-conflict,-ac  string   Comma-separated data fields to always treat as
+                                 conflicts, even when mine is empty
+                                 (default "avatar_url,avatar")
 ```
 
 ```bash
@@ -39,7 +42,7 @@ graft -i mine.json theirs.json
 | Field: mine non-empty, theirs empty | Keep mine (no conflict) |
 | Field: both equal | No conflict |
 | Field: both non-empty and different | Conflict — keep mine, log |
-| `avatar_url`: mine empty, theirs non-empty | Always conflict — never silently filled |
+| `avatar_url`/`avatar`: mine empty, theirs non-empty | Always conflict — never silently filled (configurable via `-ac`) |
 | `children`/`spouses` arrays | Union — add missing IDs, no conflicts |
 
 ## Install

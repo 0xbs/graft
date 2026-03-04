@@ -1,25 +1,9 @@
 package main
 
-// PersonData holds all personal information fields for a person.
-type PersonData struct {
-	Gender         string `json:"gender"`
-	NickName       string `json:"nick_name"`
-	FirstName      string `json:"first_name"`
-	SecondNames    string `json:"second_names"`
-	FamilyName     string `json:"family_name"`
-	BirthName      string `json:"birth_name"`
-	BirthDate      string `json:"birth_date"`
-	BirthPlace     string `json:"birth_place"`
-	ResidencePlace string `json:"residence_place"`
-	DeathDate      string `json:"death_date"`
-	DeathPlace     string `json:"death_place"`
-	BurialPlace    string `json:"burial_place"`
-	MarriageDate   string `json:"marriage_date"`
-	MarriagePlace  string `json:"marriage_place"`
-	DivorceDate    string `json:"divorce_date"`
-	AvatarURL      string `json:"avatar_url"`
-	Note           string `json:"note"`
-}
+// PersonData holds all personal information fields for a person as a dynamic
+// map, matching the family-chart format where only id, rels, and data.gender
+// are fixed and all other data fields are optional and user-defined.
+type PersonData map[string]string
 
 // PersonRels holds family relationship references for a person.
 type PersonRels struct {

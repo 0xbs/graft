@@ -22,7 +22,8 @@ func loadTestJSON(t *testing.T, path string) []Person {
 func TestMergeRules(t *testing.T) {
 	mine := loadTestJSON(t, "testdata/mine.json")
 	theirs := loadTestJSON(t, "testdata/theirs.json")
-	merged, conflicts := merge(mine, theirs)
+	ac := map[string]bool{"avatar_url": true}
+	merged, conflicts := merge(mine, theirs, ac)
 
 	// Rule 1: new person present only in theirs is appended.
 	t.Run("new_person_appended", func(t *testing.T) {
@@ -33,15 +34,15 @@ func TestMergeRules(t *testing.T) {
 		if last.ID != "aaaaaaaa-0000-0000-0000-000000000002" {
 			t.Errorf("expected new person ID, got %s", last.ID)
 		}
-		if last.Data.FirstName != "Ben" {
-			t.Errorf("expected new person first_name Ben, got %s", last.Data.FirstName)
+		if last.Data["first_name"] != "Ben" {
+			t.Errorf("expected new person first_name Ben, got %s", last.Data["first_name"])
 		}
 	})
 
 	// Rule 2: empty field in mine is filled from theirs (no conflict).
 	t.Run("empty_field_filled_from_theirs", func(t *testing.T) {
-		if merged[0].Data.BirthDate != "1985-06-15" {
-			t.Errorf("expected birth_date filled from theirs, got %q", merged[0].Data.BirthDate)
+		if merged[0].Data["birth_date"] != "1985-06-15" {
+			t.Errorf("expected birth_date filled from theirs, got %q", merged[0].Data["birth_date"])
 		}
 		hasBirthDateConflict := false
 		for _, c := range conflicts {
@@ -57,8 +58,8 @@ func TestMergeRules(t *testing.T) {
 	// Rule 3: non-empty field in mine is kept when theirs is empty (no conflict).
 	// nick_name is "Anna" in mine, "" in theirs → must stay "Anna".
 	t.Run("non_empty_mine_kept_when_theirs_empty", func(t *testing.T) {
-		if merged[0].Data.NickName != "Anna" {
-			t.Errorf("expected nick_name kept from mine, got %q", merged[0].Data.NickName)
+		if merged[0].Data["nick_name"] != "Anna" {
+			t.Errorf("expected nick_name kept from mine, got %q", merged[0].Data["nick_name"])
 		}
 	})
 
@@ -69,16 +70,16 @@ func TestMergeRules(t *testing.T) {
 				t.Error("unexpected conflict for equal note field")
 			}
 		}
-		if merged[0].Data.Note != "Teacher" {
-			t.Errorf("expected note Teacher, got %q", merged[0].Data.Note)
+		if merged[0].Data["note"] != "Teacher" {
+			t.Errorf("expected note Teacher, got %q", merged[0].Data["note"])
 		}
 	})
 
 	// Rule 5: both non-empty and different → conflict, mine's value kept.
 	// birth_place: mine="Berlin", theirs="Hamburg"
 	t.Run("conflicting_field_mine_wins", func(t *testing.T) {
-		if merged[0].Data.BirthPlace != "Berlin" {
-			t.Errorf("expected mine's birth_place kept, got %q", merged[0].Data.BirthPlace)
+		if merged[0].Data["birth_place"] != "Berlin" {
+			t.Errorf("expected mine's birth_place kept, got %q", merged[0].Data["birth_place"])
 		}
 		var found *Conflict
 		for i := range conflicts {
@@ -146,8 +147,8 @@ func TestMergeRules(t *testing.T) {
 
 	// avatar_url: mine empty, theirs has value → conflict (not a silent fill).
 	t.Run("avatar_url_empty_mine_is_conflict", func(t *testing.T) {
-		if merged[0].Data.AvatarURL != "" {
-			t.Errorf("expected avatar_url kept empty (mine), got %q", merged[0].Data.AvatarURL)
+		if merged[0].Data["avatar_url"] != "" {
+			t.Errorf("expected avatar_url kept empty (mine), got %q", merged[0].Data["avatar_url"])
 		}
 		var found bool
 		for _, c := range conflicts {
@@ -188,10 +189,10 @@ func TestMergeRules(t *testing.T) {
 
 // TestMergeEmptyInputs verifies that merging with empty slices is handled correctly.
 func TestMergeEmptyInputs(t *testing.T) {
-	person := Person{ID: "aaa", Data: PersonData{FirstName: "X"}}
+	person := Person{ID: "aaa", Data: PersonData{"first_name": "X"}}
 
 	t.Run("empty_mine", func(t *testing.T) {
-		merged, conflicts := merge(nil, []Person{person})
+		merged, conflicts := merge(nil, []Person{person}, nil)
 		if len(merged) != 1 || merged[0].ID != "aaa" {
 			t.Errorf("expected theirs added to empty mine, got %v", merged)
 		}
@@ -201,7 +202,7 @@ func TestMergeEmptyInputs(t *testing.T) {
 	})
 
 	t.Run("empty_theirs", func(t *testing.T) {
-		merged, conflicts := merge([]Person{person}, nil)
+		merged, conflicts := merge([]Person{person}, nil, nil)
 		if len(merged) != 1 || merged[0].ID != "aaa" {
 			t.Errorf("expected mine unchanged, got %v", merged)
 		}
@@ -214,12 +215,12 @@ func TestMergeEmptyInputs(t *testing.T) {
 // TestAvatarURLAlwaysConflict verifies that avatar_url is never silently filled,
 // even when mine is empty, because the file may not be available locally.
 func TestAvatarURLAlwaysConflict(t *testing.T) {
-	mine := []Person{{ID: "p1", Data: PersonData{FirstName: "X"}}}
-	theirs := []Person{{ID: "p1", Data: PersonData{FirstName: "X", AvatarURL: "avatars/x.jpg"}}}
-	merged, conflicts := merge(mine, theirs)
+	mine := []Person{{ID: "p1", Data: PersonData{"first_name": "X"}}}
+	theirs := []Person{{ID: "p1", Data: PersonData{"first_name": "X", "avatar_url": "avatars/x.jpg"}}}
+	merged, conflicts := merge(mine, theirs, map[string]bool{"avatar_url": true})
 
-	if merged[0].Data.AvatarURL != "" {
-		t.Errorf("expected avatar_url not filled (mine stays empty), got %q", merged[0].Data.AvatarURL)
+	if merged[0].Data["avatar_url"] != "" {
+		t.Errorf("expected avatar_url not filled (mine stays empty), got %q", merged[0].Data["avatar_url"])
 	}
 	if len(conflicts) != 1 || conflicts[0].Field != "data.avatar_url" {
 		t.Errorf("expected exactly one avatar_url conflict, got %v", conflicts)
@@ -236,8 +237,34 @@ func TestArrayUnionNoDuplicates(t *testing.T) {
 		ID:   "p1",
 		Rels: PersonRels{Children: []string{"c2", "c3"}},
 	}}
-	merged, _ := merge(mine, theirs)
+	merged, _ := merge(mine, theirs, nil)
 	if len(merged[0].Rels.Children) != 3 {
 		t.Errorf("expected 3 children (no duplicate c2), got %v", merged[0].Rels.Children)
+	}
+}
+
+// TestArbitraryDataFields verifies that unknown data fields are merged correctly.
+func TestArbitraryDataFields(t *testing.T) {
+	mine := []Person{{ID: "p1", Data: PersonData{"gender": "M", "custom_field": "hello"}}}
+	theirs := []Person{{ID: "p1", Data: PersonData{"gender": "M", "custom_field": "world", "new_field": "value"}}}
+	merged, conflicts := merge(mine, theirs, nil)
+
+	// custom_field conflict: both non-empty and different
+	if merged[0].Data["custom_field"] != "hello" {
+		t.Errorf("expected mine's custom_field kept, got %q", merged[0].Data["custom_field"])
+	}
+	var found bool
+	for _, c := range conflicts {
+		if c.Field == "data.custom_field" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected conflict for data.custom_field, got none")
+	}
+
+	// new_field: mine empty, theirs has value → silently filled
+	if merged[0].Data["new_field"] != "value" {
+		t.Errorf("expected new_field filled from theirs, got %q", merged[0].Data["new_field"])
 	}
 }

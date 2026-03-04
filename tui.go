@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -435,16 +434,10 @@ func applyTheirsChoice(merged []Person, c Conflict) {
 	}
 }
 
-// setPersonDataField sets a PersonData field by its JSON tag name.
+// setPersonDataField sets a PersonData entry by key.
 func setPersonDataField(data *PersonData, jsonKey, value string) {
-	t := reflect.TypeOf(*data)
-	v := reflect.ValueOf(data).Elem()
-	for i := 0; i < t.NumField(); i++ {
-		tag := t.Field(i).Tag.Get("json")
-		name, _, _ := strings.Cut(tag, ",")
-		if name == jsonKey {
-			v.Field(i).SetString(value)
-			return
-		}
+	if *data == nil {
+		*data = make(PersonData)
 	}
+	(*data)[jsonKey] = value
 }
