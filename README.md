@@ -23,7 +23,7 @@ graft -validate <file.json>               validate a file
   -always-conflict,-ac  string   Comma-separated data fields to always treat as
                                  conflicts, even when mine is empty
                                  (default "avatar_url,avatar")
-  -validate                      Validate a file for errors and warnings
+  -validate,       -v            Validate a file for errors and warnings
 ```
 
 ```bash

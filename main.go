@@ -21,6 +21,7 @@ func main() {
 	flag.StringVar(&alwaysConflictFlag, "always-conflict", "avatar_url,avatar", "Comma-separated data fields to always treat as conflicts, even when mine is empty")
 	flag.StringVar(&alwaysConflictFlag, "ac", "avatar_url,avatar", "")
 	flag.BoolVar(&validateMode, "validate", false, "Validate a file for errors and warnings instead of merging")
+	flag.BoolVar(&validateMode, "v", false, "")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage:\n")
 		fmt.Fprintf(os.Stderr, "  graft [flags] <mine.json> <theirs.json>   merge two files\n")
