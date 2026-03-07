@@ -14,33 +14,36 @@ an interactive TUI.
 ## Usage
 
 ```
-graft [flags] <mine.json> <theirs.json>   merge two files
-graft -validate <file.json>               validate a file
+graft merge [flags] <mine.json> <theirs.json>
+graft validate <file.json>
+```
 
+### merge flags
+
+```
   -output,         -o   string   Output merged file (default "merged.json")
   -conflicts,      -c   string   Conflicts report file (default "conflicts.txt")
   -interactive,    -i            Resolve conflicts interactively via TUI
   -always-conflict,-ac  string   Comma-separated data fields to always treat as
                                  conflicts, even when mine is empty
                                  (default "avatar_url,avatar")
-  -validate,       -v            Validate a file for errors and warnings
 ```
 
 ```bash
 # Non-interactive
-graft mine.json theirs.json
-graft -o result.json -c report.txt mine.json theirs.json
+graft merge mine.json theirs.json
+graft merge -o result.json -c report.txt mine.json theirs.json
 
 # Interactive
-graft -i mine.json theirs.json
+graft merge -i mine.json theirs.json
 
 # Validate
-graft -validate merged.json
+graft validate merged.json
 ```
 
 ## Validation
 
-`graft -validate <file.json>` checks a family tree JSON file for data quality issues and exits with code 1 if any errors are found.
+Validate checks a family tree JSON file for data quality issues and exits with code 1 if any errors are found.
 
 **Errors** (structural problems that should be fixed):
 
@@ -71,7 +74,7 @@ graft -validate merged.json
 | Field: mine non-empty, theirs empty | Keep mine (no conflict) |
 | Field: both equal | No conflict |
 | Field: both non-empty and different | Conflict — keep mine, log |
-| `avatar_url`/`avatar`: mine empty, theirs non-empty | Always conflict — never silently filled (configurable via `-ac`) |
+| `avatar_url`/`avatar`: mine empty, theirs non-empty | Always conflict — never silently filled (configurable via `-ac` in merge) |
 | `children`/`spouses` arrays | Union — add missing IDs, no conflicts |
 
 ## Install

@@ -9,43 +9,58 @@ import (
 	"time"
 )
 
+func printUsage() {
+	fmt.Fprintf(os.Stderr, "Usage:\n")
+	fmt.Fprintf(os.Stderr, "  graft merge [flags] <mine.json> <theirs.json>\n")
+	fmt.Fprintf(os.Stderr, "  graft validate <file.json>\n\n")
+	fmt.Fprintf(os.Stderr, "Commands:\n")
+	fmt.Fprintf(os.Stderr, "  merge     Merge two family tree files\n")
+	fmt.Fprintf(os.Stderr, "  validate  Validate a file for errors and warnings\n\n")
+	fmt.Fprintf(os.Stderr, "Run 'graft <command> -help' for command-specific flags.\n")
+}
+
 func main() {
-	var outputPath, conflictsPath, alwaysConflictFlag string
-	var interactive, validateMode bool
-	flag.StringVar(&outputPath, "output", "merged.json", "Output merged file path")
-	flag.StringVar(&outputPath, "o", "merged.json", "")
-	flag.StringVar(&conflictsPath, "conflicts", "conflicts.txt", "Output conflicts report path")
-	flag.StringVar(&conflictsPath, "c", "conflicts.txt", "")
-	flag.BoolVar(&interactive, "interactive", false, "Resolve conflicts interactively")
-	flag.BoolVar(&interactive, "i", false, "")
-	flag.StringVar(&alwaysConflictFlag, "always-conflict", "avatar_url,avatar", "Comma-separated data fields to always treat as conflicts, even when mine is empty")
-	flag.StringVar(&alwaysConflictFlag, "ac", "avatar_url,avatar", "")
-	flag.BoolVar(&validateMode, "validate", false, "Validate a file for errors and warnings instead of merging")
-	flag.BoolVar(&validateMode, "v", false, "")
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage:\n")
-		fmt.Fprintf(os.Stderr, "  graft [flags] <mine.json> <theirs.json>   merge two files\n")
-		fmt.Fprintf(os.Stderr, "  graft -validate <file.json>               validate a file\n\nFlags:\n")
-		flag.PrintDefaults()
-	}
-	flag.Parse()
-
-	if validateMode {
-		args := flag.Args()
-		if len(args) != 1 {
-			fmt.Fprintf(os.Stderr, "Usage: graft -validate <file.json>\n")
-			os.Exit(1)
-		}
-		runValidate(args[0])
-		return
-	}
-
-	args := flag.Args()
-	if len(args) != 2 {
-		flag.Usage()
+	if len(os.Args) < 2 {
+		printUsage()
 		os.Exit(1)
 	}
-	minePath, theirsPath := args[0], args[1]
+
+	switch os.Args[1] {
+	case "merge":
+		runMergeCmd(os.Args[2:])
+	case "validate":
+		runValidateCmd(os.Args[2:])
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", os.Args[1])
+		printUsage()
+		os.Exit(1)
+	}
+}
+
+func runMergeCmd(args []string) {
+	fs := flag.NewFlagSet("merge", flag.ExitOnError)
+	var outputPath, conflictsPath, alwaysConflictFlag string
+	var interactive bool
+	fs.StringVar(&outputPath, "output", "merged.json", "Output merged file path")
+	fs.StringVar(&outputPath, "o", "merged.json", "")
+	fs.StringVar(&conflictsPath, "conflicts", "conflicts.txt", "Output conflicts report path")
+	fs.StringVar(&conflictsPath, "c", "conflicts.txt", "")
+	fs.BoolVar(&interactive, "interactive", false, "Resolve conflicts interactively")
+	fs.BoolVar(&interactive, "i", false, "")
+	fs.StringVar(&alwaysConflictFlag, "always-conflict", "avatar_url,avatar", "Comma-separated data fields to always treat as conflicts, even when mine is empty")
+	fs.StringVar(&alwaysConflictFlag, "ac", "avatar_url,avatar", "")
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: graft merge [flags] <mine.json> <theirs.json>\n\nFlags:\n")
+		fs.PrintDefaults()
+	}
+	fs.Parse(args)
+
+	remaining := fs.Args()
+	if len(remaining) != 2 {
+		fs.Usage()
+		os.Exit(1)
+	}
+	minePath, theirsPath := remaining[0], remaining[1]
 
 	mine, err := loadJSON(minePath)
 	if err != nil {
@@ -92,6 +107,21 @@ func main() {
 	fmt.Printf("Merged %d persons (%d new, %d updated) -> %s\n",
 		len(merged), newCount, len(merged)-newCount, outputPath)
 	fmt.Printf("Conflicts: %d -> %s\n", len(conflicts), conflictsPath)
+}
+
+func runValidateCmd(args []string) {
+	fs := flag.NewFlagSet("validate", flag.ExitOnError)
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: graft validate <file.json>\n")
+	}
+	fs.Parse(args)
+
+	remaining := fs.Args()
+	if len(remaining) != 1 {
+		fs.Usage()
+		os.Exit(1)
+	}
+	runValidate(remaining[0])
 }
 
 // runValidate loads path, runs validation, prints all issues, and exits 1 if there are errors.
