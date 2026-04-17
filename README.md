@@ -16,6 +16,7 @@ an interactive TUI.
 ```
 graft merge [flags] <mine.json> <theirs.json>
 graft validate <file.json>
+graft subtree [flags] <file.json>
 ```
 
 ### merge flags
@@ -64,6 +65,31 @@ Validate checks a family tree JSON file for data quality issues and exits with c
 | Non-standard date format | `*_date`/`birthday` fields with values that are neither `yyyy` nor `yyyy-mm-dd` |
 | Rare fields | Fields used by exactly one person in a dataset of ≥5 (possible typo) |
 | Identical persons | Two persons sharing at least one relation and having exactly matching data fields but different IDs |
+
+## Subtree extraction
+
+Extract a connected subset of the family tree starting from a given person. The traversal follows all relationships (father, mother, children, spouses). Use stop-IDs to limit the traversal — persons at stop-IDs are included in the output, but their connections are not followed further. Relationships in the output are filtered to only reference persons within the extracted subtree.
+
+### subtree flags
+
+```
+  -from          string   Start person ID (required)
+  -stop,    -s   string   Comma-separated IDs at which traversal stops
+  -output,  -o   string   Output file path (default: stdout)
+```
+
+```bash
+# Extract full tree reachable from a person
+graft subtree -from 79a1361d-4311-4686-8d9d-c34e410d81d2 tree.json
+
+# Stop at specific persons
+graft subtree -from 79a1361d-4311-4686-8d9d-c34e410d81d2 \
+  -stop bf97ed0a-2d5f-43df-ab23-6b94809476fa,b4f9b84f-ecb4-4c66-aaf6-00439e4c613e \
+  tree.json
+
+# Write to file instead of stdout
+graft subtree -from 79a1361d-4311-4686-8d9d-c34e410d81d2 -o subtree.json tree.json
+```
 
 ## Merge behaviour
 

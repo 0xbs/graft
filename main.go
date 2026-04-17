@@ -12,10 +12,12 @@ import (
 func printUsage() {
 	fmt.Fprintf(os.Stderr, "Usage:\n")
 	fmt.Fprintf(os.Stderr, "  graft merge [flags] <mine.json> <theirs.json>\n")
-	fmt.Fprintf(os.Stderr, "  graft validate <file.json>\n\n")
+	fmt.Fprintf(os.Stderr, "  graft validate <file.json>\n")
+	fmt.Fprintf(os.Stderr, "  graft subtree [flags] <file.json>\n\n")
 	fmt.Fprintf(os.Stderr, "Commands:\n")
 	fmt.Fprintf(os.Stderr, "  merge     Merge two family tree files\n")
-	fmt.Fprintf(os.Stderr, "  validate  Validate a file for errors and warnings\n\n")
+	fmt.Fprintf(os.Stderr, "  validate  Validate a file for errors and warnings\n")
+	fmt.Fprintf(os.Stderr, "  subtree   Extract a connected subtree starting from a person\n\n")
 	fmt.Fprintf(os.Stderr, "Run 'graft <command> -help' for command-specific flags.\n")
 }
 
@@ -30,6 +32,8 @@ func main() {
 		runMergeCmd(os.Args[2:])
 	case "validate":
 		runValidateCmd(os.Args[2:])
+	case "subtree":
+		runSubtreeCmd(os.Args[2:])
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", os.Args[1])
 		printUsage()
@@ -193,6 +197,72 @@ func runValidate(path string) {
 	if len(result.Errors) > 0 {
 		os.Exit(1)
 	}
+}
+
+func runSubtreeCmd(args []string) {
+	fs := flag.NewFlagSet("subtree", flag.ExitOnError)
+	var fromID, stopFlag, outputPath string
+	fs.StringVar(&fromID, "from", "", "Start person ID (required)")
+	fs.StringVar(&stopFlag, "stop", "", "Comma-separated IDs at which traversal stops")
+	fs.StringVar(&stopFlag, "s", "", "")
+	fs.StringVar(&outputPath, "output", "", "Output file path (default: stdout)")
+	fs.StringVar(&outputPath, "o", "", "")
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: graft subtree [flags] <file.json>\n\nFlags:\n")
+		fs.PrintDefaults()
+	}
+	fs.Parse(args)
+
+	remaining := fs.Args()
+	if len(remaining) != 1 || fromID == "" {
+		fs.Usage()
+		os.Exit(1)
+	}
+
+	persons, err := loadJSON(remaining[0])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading %s: %v\n", remaining[0], err)
+		os.Exit(1)
+	}
+
+	stopIDs := parseCommaSeparated(stopFlag)
+
+	result, err := subtree(persons, fromID, stopIDs)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	data, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
+		os.Exit(1)
+	}
+
+	if outputPath != "" {
+		if err := os.WriteFile(outputPath, data, 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing %s: %v\n", outputPath, err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(os.Stderr, "Extracted %d persons -> %s\n", len(result), outputPath)
+	} else {
+		fmt.Println(string(data))
+	}
+}
+
+// parseCommaSeparated parses a comma-separated list of strings into a set,
+// returning nil for an empty input.
+func parseCommaSeparated(s string) map[string]bool {
+	if s == "" {
+		return nil
+	}
+	result := make(map[string]bool)
+	for _, f := range strings.Split(s, ",") {
+		if f = strings.TrimSpace(f); f != "" {
+			result[f] = true
+		}
+	}
+	return result
 }
 
 // parseAlwaysConflict parses a comma-separated list of field names into a set.
